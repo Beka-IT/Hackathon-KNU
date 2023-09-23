@@ -7,6 +7,8 @@ public class SuggestionResponse
     public string Content { get; set; }
     public long Viewed { get; set; }
     public long AuthorId { get; set; }
+    public User Author { get; set; }
+    public DateTime? CreatedAt { get; set; }
     public bool? Liked { get; set; } = null;
     public int Likes { get; set; }
 }

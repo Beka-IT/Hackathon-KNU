@@ -7,5 +7,6 @@ public class Suggestion
     public string Content { get; set; }
     public long Viewed { get; set; }
     public long AuthorId { get; set; }
+    public DateTime? CreatedAt { get; set; } = DateTime.Now;
     public IList<SuggestionUserLikes>? SuggestionUserLikes { get; set; }
 }

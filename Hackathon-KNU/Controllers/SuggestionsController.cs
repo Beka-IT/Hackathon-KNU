@@ -1,3 +1,4 @@
+using Hackathon_KNU.Helpers;
 using Hackathon_KNU.Models;
 using Hackathon_KNU.ViewModels;
 using Microsoft.AspNetCore.Mvc;
@@ -31,6 +32,8 @@ public class SuggestionsController : ControllerBase
                 Content = suggestion.Content,
                 Viewed = suggestion.Viewed,
                 AuthorId = suggestion.AuthorId,
+                Author = _db.Users.FirstOrDefault(x => x.Id == suggestion.AuthorId),
+                CreatedAt = suggestion.CreatedAt,
                 Liked = _db.SuggestionUserLikes
                     .Any(x => x.SuggestionId == suggestion.Id && x.UserId == userId),
                 Likes = _db.SuggestionUserLikes
@@ -57,6 +60,8 @@ public class SuggestionsController : ControllerBase
                 Content = suggestion.Content,
                 Viewed = suggestion.Viewed,
                 AuthorId = suggestion.AuthorId,
+                Author = _db.Users.FirstOrDefault(x => x.Id == suggestion.AuthorId),
+                CreatedAt = suggestion.CreatedAt,
                 Likes = _db.SuggestionUserLikes
                     .Where(x => x.SuggestionId == suggestion.Id)
                     .Count()
@@ -93,7 +98,30 @@ public class SuggestionsController : ControllerBase
     [HttpPost]
     public IActionResult AddComment(SuggestionComment comment)
     {
+        if (CensorTextHelper.IsCensored(comment.Text))
+        {
+            return Ok("Ваш коммент содержит цензурные слова!");
+        }
+        _db.Add(comment);
+        _db.SaveChanges();
         
         return Ok();
+    }
+    
+    [HttpGet]
+    public List<SuggestionCommentResponse> GetComments(long suggestionId)
+    {
+        var comments = _db.SuggestionComments
+            .Where(x => x.SuggestionId == suggestionId)
+            .Select(x => new SuggestionCommentResponse
+            {
+                Id = x.Id,
+                SuggestionId = x.SuggestionId,
+                Text = x.Text,
+                AuthorId = x.AuthorId,
+                Author = _db.Users.FirstOrDefault(u => u.Id == x.AuthorId)
+            }).ToList();
+
+        return comments;
     }
 }
