@@ -10,6 +10,7 @@ namespace Hackathon_KNU.Controllers;
 [Route("[controller]/[action]")]
 public class DocumentsController : ControllerBase
 {
+    private const string Key = "b14ca5898a4e4133bbce2ea2315a1916";
     private readonly AppDbContext _db;
     private readonly TelegramBotService _tgBotService;
     public DocumentsController(AppDbContext context, TelegramBotService botService)
@@ -26,7 +27,8 @@ public class DocumentsController : ControllerBase
         {
             document.Viewed = document.Viewed + 1;
             _db.SaveChanges();
-            var isSupported = _db.Votes.FirstOrDefault(x => x.DocumentId == document.Id && x.UserId == userId);
+            var votes = _db.Votes.ToList();
+            var isSupported = votes.FirstOrDefault(x => CryptoHelper.Decrypt(Key,x.DocumentId) == document.Id.ToString() && CryptoHelper.Decrypt(Key, x.UserId )== userId.ToString());
             var documentResponse = new DocumentResponse
             {
                 Id = document.Id,
@@ -37,7 +39,7 @@ public class DocumentsController : ControllerBase
                 Viewed = document.Viewed,
                 AuthorId = document.AuthorId,
                 IsReadyForVote = document.IsReadyForVote,
-                IsSupported = isSupported is not null ? isSupported.IsSupported : null,
+                IsSupported = isSupported is not null ? Convert.ToBoolean(CryptoHelper.Decrypt(Key,isSupported.IsSupported)) : null,
                 Author = _db.Users.FirstOrDefault(x => x.Id == document.AuthorId),
                 Initiators = GetInitiatorsByDocId(document.Id),
                 CreatedAt = document.CreatedAt
@@ -54,6 +56,8 @@ public class DocumentsController : ControllerBase
         var documentResponses = new List<DocumentResponse>();
         foreach (var document in documents)
         {
+            var votes = _db.Votes.ToList();
+            var isSupported = votes.FirstOrDefault(x => CryptoHelper.Decrypt(Key,x.DocumentId) == document.Id.ToString() && CryptoHelper.Decrypt(Key, x.UserId )== userId.ToString());
             var documentResponse = new DocumentResponse
             {
                 Id = document.Id,
@@ -64,7 +68,7 @@ public class DocumentsController : ControllerBase
                 Viewed = document.Viewed,
                 AuthorId = document.AuthorId,
                 IsReadyForVote = document.IsReadyForVote,
-                IsSupported = _db.Votes.Any(x => x.DocumentId == document.Id && x.UserId == userId),
+                IsSupported = isSupported is not null ? Convert.ToBoolean(CryptoHelper.Decrypt(Key,isSupported.IsSupported)) : null,
                 Author = _db.Users.FirstOrDefault(x => x.Id == document.AuthorId),
                 Initiators = GetInitiatorsByDocId(document.Id),
                 CreatedAt = document.CreatedAt
@@ -179,11 +183,16 @@ public class DocumentsController : ControllerBase
     }
 
     [HttpPost]
-    public IActionResult VoteForDocument(Vote vote)
+    public IActionResult VoteForDocument(VoteResponse vote)
     {
         if (vote is not null)
         {
-            _db.Votes.Add(vote);
+            _db.Votes.Add(new Vote()
+            {
+                UserId = CryptoHelper.Encrypt(Key,vote.UserId.ToString()),
+                DocumentId = CryptoHelper.Encrypt(Key,vote.DocumentId.ToString()),
+                IsSupported = CryptoHelper.Encrypt(Key,vote.IsSupported.ToString()),
+            });
             _db.SaveChanges();
         }
         
@@ -193,7 +202,8 @@ public class DocumentsController : ControllerBase
     [HttpGet]
     public IActionResult GetVotes(long documentId)
     {
-        var votes = _db.Votes.Where(x => x.DocumentId == documentId).Count();
+        var votes = _db.Votes.ToList();
+        var votesAfterFilter = votes.Where(x => CryptoHelper.Decrypt(Key,x.DocumentId) == documentId.ToString()).Count();
         
         return Ok(votes);
     }

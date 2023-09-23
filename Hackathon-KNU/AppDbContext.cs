@@ -23,7 +23,6 @@ public class AppDbContext : DbContext
     {
         modelBuilder.Entity<SuggestionUserLikes>().HasKey(sc => new { sc.UserId, sc.SuggestionId });
         modelBuilder.Entity<ArticleFeedback>().HasKey(sc => new { sc.UserId, sc.ArticleId });
-        modelBuilder.Entity<Vote>().HasKey(sc => new { sc.UserId, sc.DocumentId });
     }
 
 }
