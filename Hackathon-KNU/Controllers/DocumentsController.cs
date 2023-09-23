@@ -1,5 +1,6 @@
 using Hackathon_KNU.Helpers;
 using Hackathon_KNU.Models;
+using Hackathon_KNU.Services;
 using Hackathon_KNU.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,9 +11,11 @@ namespace Hackathon_KNU.Controllers;
 public class DocumentsController : ControllerBase
 {
     private readonly AppDbContext _db;
-    public DocumentsController(AppDbContext context)
+    private readonly TelegramBotService _tgBotService;
+    public DocumentsController(AppDbContext context, TelegramBotService botService)
     {
         _db = context;
+        _tgBotService = botService;
     }
 
     [HttpGet]
@@ -71,7 +74,7 @@ public class DocumentsController : ControllerBase
     }
 
     [HttpPost]
-    public IActionResult Add(AddDocumentRequest document)
+    public async Task<IActionResult> Add(AddDocumentRequest document)
     {
         if (document is not null)
         {
@@ -84,6 +87,10 @@ public class DocumentsController : ControllerBase
                 ContentRu = document.ContentRu,
                 CreatedAt = DateTime.Now
             };
+            string message = "Кыргызча\n\nМыйзам долбоору\n\n\t" + document.ContentKg + "\n\nКыскача түшүндүрмөсү\n\n\t";
+            message += await ChatGptService.SendMessage(document.ContentKg + "Жөнөкөй тил менен түшүндүр!");
+            message += "\n\n\n\nНа русском\n\nЗаконопроект\n\n\t"  + document.ContentRu + "\n\nКраткое описание\n\n\t" + await ChatGptService.SendMessage(document.ContentRu + "Обьясни простыми словами!");
+            await _tgBotService.SendMessage(message);
             _db.Add(newDocument);
             _db.SaveChanges();
             return Ok();
