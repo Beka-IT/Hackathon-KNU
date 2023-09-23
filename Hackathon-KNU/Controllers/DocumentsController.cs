@@ -19,14 +19,14 @@ public class DocumentsController : ControllerBase
     }
 
     [HttpGet]
-    public IActionResult Get(long id)
+    public IActionResult Get(long id, long userId)
     {
         var document = _db.Documents.FirstOrDefault(x => x.Id == id);
         if(document is not null)
         {
             document.Viewed = document.Viewed + 1;
             _db.SaveChanges();
-
+            var isSupported = _db.Votes.FirstOrDefault(x => x.DocumentId == document.Id && x.UserId == userId);
             var documentResponse = new DocumentResponse
             {
                 Id = document.Id,
@@ -37,6 +37,7 @@ public class DocumentsController : ControllerBase
                 Viewed = document.Viewed,
                 AuthorId = document.AuthorId,
                 IsReadyForVote = document.IsReadyForVote,
+                IsSupported = isSupported is not null ? isSupported.IsSupported : null,
                 Author = _db.Users.FirstOrDefault(x => x.Id == document.AuthorId),
                 Initiators = GetInitiatorsByDocId(document.Id),
                 CreatedAt = document.CreatedAt
@@ -47,7 +48,7 @@ public class DocumentsController : ControllerBase
     }
     
     [HttpGet]
-    public IActionResult GetAll()
+    public IActionResult GetAll(long userId)
     {
         var documents = _db.Documents.ToList();
         var documentResponses = new List<DocumentResponse>();
@@ -63,6 +64,7 @@ public class DocumentsController : ControllerBase
                 Viewed = document.Viewed,
                 AuthorId = document.AuthorId,
                 IsReadyForVote = document.IsReadyForVote,
+                IsSupported = _db.Votes.Any(x => x.DocumentId == document.Id && x.UserId == userId),
                 Author = _db.Users.FirstOrDefault(x => x.Id == document.AuthorId),
                 Initiators = GetInitiatorsByDocId(document.Id),
                 CreatedAt = document.CreatedAt
@@ -87,9 +89,9 @@ public class DocumentsController : ControllerBase
                 ContentRu = document.ContentRu,
                 CreatedAt = DateTime.Now
             };
-            string message = "Кыргызча\n\nМыйзам долбоору\n\n\t" + document.ContentKg + "\n\nКыскача түшүндүрмөсү\n\n\t";
+            string message = "Кыргызча\n\nМыйзам долбоору\n\n\t" + document.TitleKg + "\n\n" + document.ContentKg + "\n\nКыскача түшүндүрмөсү\n\n\t";
             message += await ChatGptService.SendMessage(document.ContentKg + "Жөнөкөй тил менен түшүндүр!");
-            message += "\n\n\n\nНа русском\n\nЗаконопроект\n\n\t"  + document.ContentRu + "\n\nКраткое описание\n\n\t" + await ChatGptService.SendMessage(document.ContentRu + "Обьясни простыми словами!");
+            message += "\n\n\n\nНа русском\n\nЗаконопроект\n\n\t" + document.TitleKg + "\n\n"  + document.ContentRu + "\n\nКраткое описание\n\n\t" + await ChatGptService.SendMessage(document.ContentRu + "Обьясни простыми словами!");
             await _tgBotService.SendMessage(message);
             _db.Add(newDocument);
             _db.SaveChanges();
@@ -169,9 +171,30 @@ public class DocumentsController : ControllerBase
                 Id = x.Id,
                 DocumentId = x.DocumentId,
                 UserId = x.UserId,
+                ContactDetail = x.ContactDetail,
                 User = _db.Users.FirstOrDefault(u => u.Id == x.UserId)
             }).ToList();
 
         return initiators;
+    }
+
+    [HttpPost]
+    public IActionResult VoteForDocument(Vote vote)
+    {
+        if (vote is not null)
+        {
+            _db.Votes.Add(vote);
+            _db.SaveChanges();
+        }
+        
+        return Ok();
+    }
+    
+    [HttpGet]
+    public IActionResult GetVotes(long documentId)
+    {
+        var votes = _db.Votes.Where(x => x.DocumentId == documentId).Count();
+        
+        return Ok(votes);
     }
 }

@@ -17,13 +17,6 @@ public class UsersController : ControllerBase
     {
         _db = context;
     }
-    
-    [HttpGet]
-    public async Task<IActionResult> Bot(string message)
-    {
-        var answer = await ChatGptService.SendMessage(message);
-        return Ok(answer);
-    }
 
     [HttpPost]
     public async Task<User> SignIn(SignInRequest req)
@@ -36,24 +29,5 @@ public class UsersController : ControllerBase
         }
 
         return null;
-    }
-    
-    [HttpPost]
-    public User SignUp(SignUpRequest req)
-    {
-        var newUser = new User
-        {
-            Pin = req.Pin,
-            Name = req.Name,
-            Surname = req.Surname,
-            Patronomyc = req.Patronomyc,
-            PhoneNumber = req.PhoneNumber,
-            WalletAddress = req.WalletAddress
-        };
-        
-        _db.Add(newUser);
-        _db.SaveChanges();
-        
-        return newUser;
     }
 }

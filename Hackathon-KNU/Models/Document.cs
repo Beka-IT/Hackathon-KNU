@@ -11,4 +11,5 @@ public class Document
     public long Viewed { get; set; }
     public DateTime CreatedAt { get; set; }  = DateTime.Now;
     public long AuthorId { get; set; }
+    public IList<Vote>? Votes { get; set; }
 }

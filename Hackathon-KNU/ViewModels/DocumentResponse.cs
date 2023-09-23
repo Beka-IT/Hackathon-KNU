@@ -12,6 +12,7 @@ public class DocumentResponse
     public long Viewed { get; set; }
     public long AuthorId { get; set; }
     public bool IsReadyForVote { get; set; }
+    public bool? IsSupported { get; set; }
     public List<GetInitiatorResponse> Initiators { get; set; }
     public User Author { get; set; }
     public DateTime? CreatedAt { get; set; }
