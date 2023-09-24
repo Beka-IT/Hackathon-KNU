@@ -11,7 +11,7 @@ namespace Hackathon_KNU.Services;
 
 public class ChatGptService
 {
-    private const string ApiKey = "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";
+    private const string ApiKey = "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";
     private const string Endpoint ="https://api.openai.com/v1/chat/completions";
 
     public static async Task<string> SendMessage(string message)

@@ -95,7 +95,7 @@ public class DocumentsController : ControllerBase
             };
             string message = "Кыргызча\n\nМыйзам долбоору\n\n\t" + document.TitleKg + "\n\n" + document.ContentKg + "\n\nКыскача түшүндүрмөсү\n\n\t";
             message += await ChatGptService.SendMessage(document.ContentKg + "Жөнөкөй тил менен түшүндүр!");
-            message += "\n\n\n\nНа русском\n\nЗаконопроект\n\n\t" + document.TitleKg + "\n\n"  + document.ContentRu + "\n\nКраткое описание\n\n\t" + await ChatGptService.SendMessage(document.ContentRu + "Обьясни простыми словами!");
+            message += "\n\n\n\nНа русском\n\nЗаконопроект\n\n\t" + document.TitleRu + "\n\n"  + document.ContentRu + "\n\nКраткое описание\n\n\t" + await ChatGptService.SendMessage(document.ContentRu + "Обьясни простыми словами!");
             await _tgBotService.SendMessage(message);
             _db.Add(newDocument);
             _db.SaveChanges();

@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text;
 using System.Xml;
 using Hackathon_KNU.Models;
@@ -18,16 +19,9 @@ public class UsersController : ControllerBase
         _db = context;
     }
 
-    [HttpPost]
-    public async Task<User> SignIn(SignInRequest req)
+    [HttpGet]
+    public IActionResult SignIn()
     {
-        var user = _db.Users.FirstOrDefault(x => x.Pin == req.Pin);
-
-        if (user is not null)
-        {
-            return user;
-        }
-
-        return null;
+        return RedirectPermanent("https:balacn");
     }
 }
